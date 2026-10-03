@@ -1,0 +1,26 @@
+# Local / generated paths (recreated when you run scripts)
+data/
+outputs/
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.DS_Store
+.idea/
+.vscode/
+
+# Model weights
+*.pt
+*.bin
+*.safetensors
+
+# Keep tiny demos tracked
+!examples/*.jsonl
+!examples/**/*.jsonl

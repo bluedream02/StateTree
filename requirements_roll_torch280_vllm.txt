@@ -1,0 +1,19 @@
+-r requirements_common.txt
+
+quack-kernels==0.2.4
+
+torch==2.8.0.*
+torchvision==0.23.0.* 
+torchaudio==2.8.0.*
+
+transformers==4.57.0
+accelerate==0.34.2
+
+flash-attn
+
+#todo upgrade docker image
+vllm==0.10.2
+
+
+# for GDN , eg: Qwen3Next
+flash-linear-attention

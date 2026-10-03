@@ -1,0 +1,17 @@
+In the conversation above, there are JSON records like {"UUID": {"step": "...", "next": "UUID"}} scattered throughout the dialogue text. They form a decision tree.
+
+Each record maps a UUID key to a JSON object with:
+- "step": a piece of information to accumulate along the path
+- "next": the UUID of the next node to follow (absent at leaf nodes)
+
+Your task: start from key "{root_uuid}" and follow the tree to a leaf, accumulating the step information at each edge. Then answer the question.
+
+How to follow the tree:
+1. Search the entire conversation for all records whose key matches the current UUID.
+2. Each record sits inside a specific session. Look at the nearest preceding "DATE: ..." line to determine that record's session time.
+3. If the same key appears in multiple sessions, pick the record from the most recent session DATE.
+4. Read the "step" field and remember it.
+5. If a "next" field exists, use it as the new key and go back to step 1.
+6. If no "next" field exists, you have reached a leaf.
+
+Once you reach a leaf, aggregate all the step information you collected along the path to form the final question. Then answer that question step by step based on the conversation content.

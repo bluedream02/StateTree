@@ -1,0 +1,44 @@
+{
+  "demo-1::When did Alice start painting?": {
+    "persons": [
+      {
+        "step_1": "[A] Alice",
+        "events": [
+          {
+            "step_2": "[B] painting",
+            "leaves": [
+              {"step_3": "When did [A] start [B]?", "answer": "April, 2023", "is_target": true},
+              {"step_3": "What did [A] finish while [B]?", "answer": "a landscape", "is_target": false}
+            ]
+          },
+          {
+            "step_2": "[B] expanding her studio",
+            "leaves": [
+              {"step_3": "When might [A] start [B]?", "answer": "next year", "is_target": false},
+              {"step_3": "Why is [A] considering [B]?", "answer": "join the race", "is_target": false}
+            ]
+          }
+        ]
+      },
+      {
+        "step_1": "[A] Bob",
+        "events": [
+          {
+            "step_2": "[B] preparing for the marathon",
+            "leaves": [
+              {"step_3": "What did [A] get for [B]?", "answer": "running shoes", "is_target": false},
+              {"step_3": "When did [A] mention [B]?", "answer": "10 June, 2023", "is_target": false}
+            ]
+          },
+          {
+            "step_2": "[B] joining a charity race",
+            "leaves": [
+              {"step_3": "What did [A] say [B] raised awareness for?", "answer": "mental health", "is_target": false},
+              {"step_3": "When did [A] talk about [B]?", "answer": "20 July, 2023", "is_target": false}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

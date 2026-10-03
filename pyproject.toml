@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "statetree"
+version = "0.1.0"
+description = "StateTree: tree-structured RL pseudo-tasks for long-term dialogue reasoning"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "StateTree Authors" }]
+dependencies = []
+
+[project.optional-dependencies]
+train = ["torch", "transformers", "openai", "pyyaml"]
+
+[tool.setuptools.packages.find]
+include = ["statetree*", "roll*"]
+
+[tool.setuptools.package-data]
+statetree = ["py.typed"]

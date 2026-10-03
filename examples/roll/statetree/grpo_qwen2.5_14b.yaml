@@ -1,0 +1,177 @@
+# StateTree GRPO — Qwen2.5-14B-Instruct (paper Section 4).
+# Prompt batch size 32 (vs 64 for 7B/8B). Megatron TP=2 for memory.
+# Usage:
+#   python examples/roll/start_rlvr_pipeline.py \
+#     --config_path examples/roll/statetree \
+#     --config_name grpo_qwen2.5_14b
+#
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+exp_name: "statetree-qwen2.5-14B"
+seed: 42
+logging_dir: ./outputs/roll/logs
+output_dir: ./outputs/roll
+
+system_envs:
+  USE_MODELSCOPE: "0"
+
+checkpoint_config:
+  type: file_system
+  output_dir: ./outputs/roll/checkpoints/${exp_name}
+
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ./outputs/roll/tensorboard/${exp_name}
+
+num_gpus_per_node: 8
+
+# Curriculum stage length is overridden by the runner script.
+max_steps: 100
+save_steps: 50
+logging_steps: 1
+eval_steps: 20
+resume_from_checkpoint: false
+async_generation_ratio: 0
+
+# Paper: prompt batch 32 (14B), group size 8, response 4096, ~10K context
+rollout_batch_size: 32
+prompt_length: 10240
+response_length: 4096
+
+num_return_sequences_in_group: 8
+ppo_epochs: 1
+adv_estimator: "reinforce"  # GRPO-style group relative advantages
+
+value_clip: 0.5
+reward_clip: 10
+advantage_clip: 2.0
+dual_clip_loss: true
+
+norm_mean_type: ~
+norm_std_type: ~
+
+max_len_mask: true
+difficulty_mask: false
+error_max_len_clip: false
+difficulty_loss_weight: false
+length_loss_weight: false
+
+add_token_level_kl: false
+# Paper KL penalty β = 0.001
+init_kl_coef: 0.001
+kl_penalty: kl
+use_kl_loss: false
+
+whiten_advantages: true
+global_template: statetree_qwen2_5
+
+pretrain: Qwen/Qwen2.5-14B-Instruct
+reward_pretrain: Qwen/Qwen2.5-1.5B-Instruct
+
+actor_train:
+  model_args:
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: ~
+  training_args:
+    learning_rate: 1.0e-6
+    weight_decay: 0
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 32
+    warmup_steps: 10
+    num_train_epochs: 50
+    max_grad_norm: 1.0
+  data_args:
+    template: statetree_qwen2_5
+    file_name:
+      - data/curriculum/stage0_warmup.roll.jsonl
+    domain_interleave_probs:
+      statetree: 1.0
+    dataset_dir: .
+    messages: messages
+    interleave_probs: "1.0"
+    preprocessing_num_workers: 8
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+  device_mapping: list(range(0,8))
+  infer_batch_size: 1
+
+actor_infer:
+  model_args:
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: ${response_length}
+    top_p: 0.95
+    top_k: -1
+    num_beams: 1
+    temperature: 0.6
+    num_return_sequences: ${num_return_sequences_in_group}
+  data_args:
+    template: statetree_qwen2_5
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.70
+      block_size: 16
+      max_model_len: 16384
+      load_format: auto
+  device_mapping: list(range(0,6))
+  infer_batch_size: 1
+
+reference:
+  model_args:
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: ~
+  data_args:
+    template: statetree_qwen2_5
+  strategy_args:
+    strategy_name: megatron_infer
+    strategy_config:
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+  device_mapping: list(range(0,8))
+  infer_batch_size: 1
+
+rewards:
+  # Combined EM + LLM-Judge (paper Eq. for r_phi)
+  # For EM-only warmup/debug, set judge_model_type: em_only and drop GPU mapping.
+  statetree:
+    worker_cls: roll.pipeline.rlvr.rewards.statetree_combined_reward_worker.StateTreeCombinedRewardWorker
+    judge_prompt: StateTree-LoCoMo-judge
+    judge_model_type: inference
+    skip_llm_if_em: true
+    tag_included: [locomo, statetree]
+    model_args:
+      model_name_or_path: ${reward_pretrain}
+      attn_implementation: fa2
+      disable_gradient_checkpointing: true
+      dtype: bf16
+      model_type: trl
+    generating_args:
+      max_new_tokens: 256
+      temperature: 0.0
+      num_return_sequences: 1
+    data_args:
+      template: statetree_qwen2_5
+    strategy_args:
+      strategy_name: vllm
+      strategy_config:
+        gpu_memory_utilization: 0.6
+        enforce_eager: false
+        block_size: 16
+        max_model_len: 8192
+        load_format: auto
+    device_mapping: list(range(6,8))
+    infer_batch_size: 4
