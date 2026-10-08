@@ -1,6 +1,6 @@
-# [NeurIPS 2026] StateTree: Enhancing Long-term Dialogue Reasoning via Tree-structured RL Pseudo-tasks
+# [NeurIPS 2026] StateTree: Enhancing Long-Term Dialogue Reasoning via Reinforcement Learning
 
-Official implementation of **"StateTree: Enhancing Long-term Dialogue Reasoning via Tree-structured RL Pseudo-tasks"** (NeurIPS 2026).
+Official implementation of **"StateTree: Enhancing Long-Term Dialogue Reasoning via Reinforcement Learning"** (NeurIPS 2026).
 
 ## 📑 Table of Contents
 
